@@ -23,4 +23,5 @@ public class User {
     private String photo_url;
 
     private boolean isBusiness;
+    
 }
