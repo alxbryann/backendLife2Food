@@ -1,6 +1,7 @@
 package life2food.backend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -27,8 +28,10 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id) {
-        return userRepository.findById(id).orElse(null);
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        return userRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
     
 
@@ -38,17 +41,34 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User user) {
-        User existingUser = userRepository.findById(id).orElseThrow();
-        existingUser.setFirst_name(user.getFirst_name());
-        existingUser.setLast_name(user.getLast_name());
-        existingUser.setEmail(user.getEmail());
-        return userRepository.save(existingUser);
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
+        User existingUser = userRepository.findById(id).orElse(null);
+        if (existingUser == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (user.getFirst_name() != null) {
+            existingUser.setFirst_name(user.getFirst_name());
+        }
+        if (user.getLast_name() != null) {
+            existingUser.setLast_name(user.getLast_name());
+        }
+        if (user.getEmail() != null) {
+            existingUser.setEmail(user.getEmail());
+        }
+        if (user.getPhoto_url() != null) {
+            existingUser.setPhoto_url(user.getPhoto_url());
+        }
+        existingUser.setBusiness(user.isBusiness());
+        return ResponseEntity.ok(userRepository.save(existingUser));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        if (!userRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
         userRepository.deleteById(id);
+        return ResponseEntity.ok().build();
     }
 
 

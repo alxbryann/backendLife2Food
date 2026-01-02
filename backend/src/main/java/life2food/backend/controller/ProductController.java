@@ -3,6 +3,7 @@ package life2food.backend.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,8 +33,10 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public Product getProductById(@PathVariable Long id) {
-        return productRepository.findById(id).orElse(null);
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        return productRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
     
 
@@ -43,18 +46,39 @@ public class ProductController {
     }
     
     @PatchMapping("/{id}")
-    public Product updateProduct(@PathVariable Long id,@RequestBody Product product) {
-        Product existingProduct = productRepository.findById(id).orElseThrow();
-        existingProduct.setName(product.getName());
-        existingProduct.setDescription(product.getDescription());
-        existingProduct.setPrice(product.getPrice());
-        existingProduct.setAmount(product.getAmount());
-        return productRepository.save(existingProduct);
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
+        Product existingProduct = productRepository.findById(id).orElse(null);
+        if (existingProduct == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (product.getName() != null) {
+            existingProduct.setName(product.getName());
+        }
+        if (product.getDescription() != null) {
+            existingProduct.setDescription(product.getDescription());
+        }
+        if (product.getPrice() != null) {
+            existingProduct.setPrice(product.getPrice());
+        }
+        if (product.getAmount() != null) {
+            existingProduct.setAmount(product.getAmount());
+        }
+        if (product.getExpirationDate() != null) {
+            existingProduct.setExpirationDate(product.getExpirationDate());
+        }
+        if (product.getUser() != null) {
+            existingProduct.setUser(product.getUser());
+        }
+        return ResponseEntity.ok(productRepository.save(existingProduct));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        if (!productRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
         productRepository.deleteById(id);
+        return ResponseEntity.ok().build();
     }
 
 
