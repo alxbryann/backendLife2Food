@@ -4,8 +4,11 @@ info:
   description: API documentation for the Life2Food backend services.
   version: 1.0.0
 servers:
+servers:
+  - url: https://api.life2food.com
+    description: Production
   - url: http://localhost:8080
-    description: Local development server
+    description: Local
 
 components:
   schemas:
