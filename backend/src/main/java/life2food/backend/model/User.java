@@ -22,6 +22,8 @@ public class User {
     
     private String photo_url;
 
+    private String address;
+
     private double latitude;
 
     private double longitude;
