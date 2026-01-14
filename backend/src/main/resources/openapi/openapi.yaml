@@ -4,7 +4,6 @@ info:
   description: API documentation for the Life2Food backend services.
   version: 1.0.0
 servers:
-servers:
   - url: https://api.life2food.com
     description: Production
   - url: http://localhost:8080
@@ -33,6 +32,14 @@ components:
           type: string
           format: uri
           description: URL to user's profile photo
+        latitude:
+          type: number
+          format: double
+          description: User's latitude coordinate
+        longitude:
+          type: number
+          format: double
+          description: User's longitude coordinate
         isBusiness:
           type: boolean
           description: Whether the user is a business account
@@ -60,6 +67,14 @@ components:
           type: string
           format: uri
           description: URL to user's profile photo
+        latitude:
+          type: number
+          format: double
+          description: User's latitude coordinate
+        longitude:
+          type: number
+          format: double
+          description: User's longitude coordinate
         isBusiness:
           type: boolean
           description: Whether the user is a business account
@@ -86,6 +101,14 @@ components:
           type: string
           format: uri
           description: URL to user's profile photo
+        latitude:
+          type: number
+          format: double
+          description: User's latitude coordinate
+        longitude:
+          type: number
+          format: double
+          description: User's longitude coordinate
         isBusiness:
           type: boolean
           description: Whether the user is a business account
