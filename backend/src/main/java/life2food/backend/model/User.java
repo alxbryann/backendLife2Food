@@ -22,6 +22,10 @@ public class User {
     
     private String photo_url;
 
+    private double latitude;
+
+    private double longitude;
+
     private boolean isBusiness;
     
 }
