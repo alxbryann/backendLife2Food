@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import life2food.backend.model.User;
 import life2food.backend.repository.UserRepository;
+import life2food.backend.service.EmailService;
 
 
 @RestController
@@ -21,6 +22,9 @@ public class UserController {
 
     @Autowired
     public UserRepository userRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     @GetMapping()
     public Iterable<User> getAllUsers() {
@@ -38,6 +42,12 @@ public class UserController {
     @PostMapping()
     public ResponseEntity<User> createUser(@RequestBody User user) {
         User savedUser = userRepository.save(user);
+        
+        // Enviar email de bienvenida si el usuario tiene email
+        if (savedUser.getEmail() != null && !savedUser.getEmail().isEmpty()) {
+            emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirst_name());
+        }
+        
         return ResponseEntity.ok(savedUser);
     }
 
