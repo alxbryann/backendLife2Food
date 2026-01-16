@@ -14,7 +14,8 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                     "http://localhost:8080",
                     "http://localhost:4200",
-                    "https://api.life2food.com"
+                    "https://api.life2food.com",
+                    "https://owners.life2food.com"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
@@ -26,7 +27,8 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                     "http://localhost:8080",
                     "http://localhost:4200",
-                    "https://api.life2food.com"
+                    "https://api.life2food.com",
+                    "https://owners.life2food.com"
                 )
                 .allowedMethods("GET", "OPTIONS")
                 .allowedHeaders("*")
@@ -36,7 +38,8 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                     "http://localhost:8080",
                     "http://localhost:4200",
-                    "https://api.life2food.com"
+                    "https://api.life2food.com",
+                    "https://owners.life2food.com"
                 )
                 .allowedMethods("GET", "OPTIONS")
                 .allowedHeaders("*")
