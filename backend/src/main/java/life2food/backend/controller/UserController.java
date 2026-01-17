@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
 import life2food.backend.model.User;
 import life2food.backend.repository.UserRepository;
 import life2food.backend.service.EmailService;
@@ -25,6 +26,27 @@ public class UserController {
 
     @Autowired
     private EmailService emailService;
+
+    @PostMapping("/auth/google")
+    public ResponseEntity<User> googleLogin(@RequestBody User userPayload) {
+        if (userPayload.getEmail() == null || userPayload.getEmail().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Optional<User> existingUser = userRepository.findByEmail(userPayload.getEmail());
+        if (existingUser.isPresent()) {
+            return ResponseEntity.ok(existingUser.get());
+        } else {
+            User newUser = new User();
+            newUser.setEmail(userPayload.getEmail());
+            newUser.setFirst_name(userPayload.getFirst_name());
+            newUser.setLast_name(userPayload.getLast_name());
+            newUser.setPhoto_url(userPayload.getPhoto_url());
+            
+            User savedUser = userRepository.save(newUser);
+            emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirst_name());
+            return ResponseEntity.ok(savedUser);
+        }
+    }
 
     @GetMapping()
     public Iterable<User> getAllUsers() {
