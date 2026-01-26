@@ -97,4 +97,19 @@ public class UserControllerTest {
         verify(emailService).sendWelcomeEmail("new@example.com", "New");
         verify(userRepository).save(any(User.class));
     }
+
+    @Test
+    public void testCreateUser_DuplicateEmail() throws Exception {
+        User user = new User();
+        user.setEmail("duplicate@example.com");
+
+        when(userRepository.findByEmail("duplicate@example.com")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(post("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(user)))
+                .andExpect(status().isConflict());
+
+        verify(userRepository, never()).save(any(User.class));
+    }
 }

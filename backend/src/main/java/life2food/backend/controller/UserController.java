@@ -16,7 +16,6 @@ import life2food.backend.model.User;
 import life2food.backend.repository.UserRepository;
 import life2food.backend.service.EmailService;
 
-
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -41,7 +40,7 @@ public class UserController {
             newUser.setFirst_name(userPayload.getFirst_name());
             newUser.setLast_name(userPayload.getLast_name());
             newUser.setPhoto_url(userPayload.getPhoto_url());
-            
+
             User savedUser = userRepository.save(newUser);
             emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirst_name());
             return ResponseEntity.ok(savedUser);
@@ -59,17 +58,19 @@ public class UserController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-    
 
     @PostMapping()
     public ResponseEntity<User> createUser(@RequestBody User user) {
+        if (user.getEmail() != null && userRepository.findByEmail(user.getEmail()).isPresent()) {
+            return ResponseEntity.status(409).build();
+        }
         User savedUser = userRepository.save(user);
-        
+
         // Enviar email de bienvenida si el usuario tiene email
         if (savedUser.getEmail() != null && !savedUser.getEmail().isEmpty()) {
             emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirst_name());
         }
-        
+
         return ResponseEntity.ok(savedUser);
     }
 
@@ -103,6 +104,5 @@ public class UserController {
         userRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
-
 
 }
