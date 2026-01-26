@@ -32,6 +32,8 @@ public class Product {
 
     private Date expirationDate;
 
+    private String imageUrl;
+
     private Date createdAt;
     
 }

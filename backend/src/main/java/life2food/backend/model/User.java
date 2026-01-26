@@ -13,6 +13,7 @@ import java.util.List;
 
 @Data
 @Entity
+@jakarta.persistence.Table(name = "user")
 public class User {
 
     @Id
@@ -24,7 +25,7 @@ public class User {
     private String last_name;
 
     private String email;
-    
+
     private String photo_url;
 
     private String address;
@@ -38,5 +39,5 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Cart> carts = new ArrayList<>();
-    
+
 }

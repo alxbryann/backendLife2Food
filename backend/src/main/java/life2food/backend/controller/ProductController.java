@@ -1,15 +1,20 @@
 package life2food.backend.controller;
 
 import java.util.List;
+import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import life2food.backend.model.Product;
 import life2food.backend.repository.ProductRepository;
+import life2food.backend.service.S3Service;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +32,9 @@ public class ProductController {
     @Autowired
     public ProductRepository productRepository;
 
+    @Autowired
+    private S3Service s3Service;
+
     @GetMapping()
     public List<Product> getAllProducts(){
         return productRepository.findAll();
@@ -40,8 +48,10 @@ public class ProductController {
     }
     
 
-    @PostMapping()
-    public Product createProduct(@RequestBody Product product) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Product createProduct(@RequestPart("product") Product product, @RequestPart("image") MultipartFile image) throws IOException {
+        String imageUrl = s3Service.uploadFile(image);
+        product.setImageUrl(imageUrl);
         return productRepository.save(product);
     }
     
