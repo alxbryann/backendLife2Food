@@ -59,6 +59,13 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/email/{email}")
+    public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
+        return userRepository.findByEmail(email)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping()
     public ResponseEntity<User> createUser(@RequestBody User user) {
         if (user.getEmail() != null && userRepository.findByEmail(user.getEmail()).isPresent()) {
