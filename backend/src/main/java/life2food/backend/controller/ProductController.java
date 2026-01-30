@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,8 +22,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-
-
 @RestController
 @RequestMapping("/products")
 public class ProductController {
@@ -36,8 +33,13 @@ public class ProductController {
     private S3Service s3Service;
 
     @GetMapping()
-    public List<Product> getAllProducts(){
+    public List<Product> getAllProducts() {
         return productRepository.findAll();
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<Product> getProductsByUserId(@PathVariable Long userId) {
+        return productRepository.findByUserId(userId);
     }
 
     @GetMapping("/{id}")
@@ -46,15 +48,15 @@ public class ProductController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-    
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Product createProduct(@RequestPart("product") Product product, @RequestPart("image") MultipartFile image) throws IOException {
+    public Product createProduct(@RequestPart("product") Product product, @RequestPart("image") MultipartFile image)
+            throws IOException {
         String imageUrl = s3Service.uploadFile(image);
         product.setImageUrl(imageUrl);
         return productRepository.save(product);
     }
-    
+
     @PatchMapping("/{id}")
     public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
         Product existingProduct = productRepository.findById(id).orElse(null);
@@ -90,7 +92,5 @@ public class ProductController {
         productRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
-
-
 
 }
