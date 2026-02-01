@@ -34,7 +34,7 @@ public class OrderService {
 
         Order order = new Order();
         order.setUser(user);
-        order.setStatus("PAID");
+        order.setStatus("PENDING");
 
         List<OrderItem> orderItems = cart.getItems().stream().map(cartItem -> {
             OrderItem orderItem = new OrderItem();
