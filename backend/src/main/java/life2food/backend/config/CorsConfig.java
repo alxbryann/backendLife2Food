@@ -10,13 +10,9 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // Permitir cualquier origen para evitar 403 Access Denied (app móvil, Expo, distintos puertos)
         registry.addMapping("/**")
-                .allowedOrigins(
-                    "http://localhost:8080",
-                    "http://localhost:4200",
-                    "https://api.life2food.com",
-                    "https://owners.life2food.com"
-                )
+                .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
                 .allowCredentials(true)

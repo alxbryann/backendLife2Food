@@ -41,6 +41,7 @@ ssh -i "$KEY_PATH" "$USER@$HOST" << 'EOF'
     --name life2food-backend \
     -p 8080:8080 \
     -v /mnt/data:/mnt/data \
+    --env-file .env \
     life2food-backend
     
   echo "Remote deployment completed successfully!"

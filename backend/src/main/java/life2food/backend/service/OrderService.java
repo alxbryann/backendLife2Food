@@ -35,6 +35,31 @@ public class OrderService {
         Order order = new Order();
         order.setUser(user);
         order.setStatus("PENDING");
+        return saveOrderFromCart(order, cart, user);
+    }
+
+    /**
+     * Crea la orden desde el carrito y la marca como PAID. Usado cuando el pago ya fue confirmado (Mercado Pago).
+     */
+    @Transactional
+    public Order checkoutAndSetPaid(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Cart not found for user"));
+
+        if (cart.getItems().isEmpty()) {
+            throw new RuntimeException("Cart is empty");
+        }
+
+        Order order = new Order();
+        order.setUser(user);
+        order.setStatus("PAID");
+        return saveOrderFromCart(order, cart, user);
+    }
+
+    private Order saveOrderFromCart(Order order, Cart cart, User user) {
 
         List<OrderItem> orderItems = cart.getItems().stream().map(cartItem -> {
             OrderItem orderItem = new OrderItem();
@@ -54,7 +79,6 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        // clear cart
         cart.getItems().clear();
         cartRepository.save(cart);
 
