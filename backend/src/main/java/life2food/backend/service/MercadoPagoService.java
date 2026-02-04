@@ -67,11 +67,11 @@ public class MercadoPagoService {
         pending.setUser(user);
         pending = pendingCheckoutRepository.save(pending);
 
-        // Construir items para Mercado Pago (unit_price debe ser entero; en COP se envía en centavos)
+        // Construir items para Mercado Pago (unit_price debe ser entero; el precio ya viene en pesos colombianos)
         List<Map<String, Object>> mpItems = cart.getItems().stream().map(cartItem -> {
             Product p = cartItem.getProduct();
             double price = p.getPrice() != null ? p.getPrice() : 0;
-            int unitPriceCents = (int) Math.round(price * 100);
+            int unitPriceCents = (int) Math.round(price);
             Map<String, Object> item = new HashMap<>();
             item.put("title", p.getName() != null ? p.getName() : "Producto");
             item.put("quantity", cartItem.getQuantity());
