@@ -35,8 +35,20 @@ ssh -i "$KEY_PATH" "$USER@$HOST" << 'EOF'
   docker stop life2food-backend || true
   docker rm life2food-backend || true
   
-  # 5. Run the new container
-  echo "Starting new container..."
+  # 5. Verify .env file exists
+  if [ ! -f .env ]; then
+    echo "Error: .env file not found. Please create it with the required environment variables:"
+    echo "  MAIL_PASSWORD"
+    echo "  AWS_ACCESS_KEY"
+    echo "  AWS_SECRET_KEY"
+    echo "  MERCADOPAGO_ACCESS_TOKEN"
+    echo "  MERCADOPAGO_PUBLIC_KEY"
+    echo "  MERCADOPAGO_NOTIFICATION_URL (optional)"
+    exit 1
+  fi
+  
+  # 6. Run the new container
+  echo "Starting new container with environment variables from .env file..."
   docker run -d \
     --name life2food-backend \
     -p 8080:8080 \
