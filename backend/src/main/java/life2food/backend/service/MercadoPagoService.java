@@ -47,9 +47,14 @@ public class MercadoPagoService {
     @Autowired
     private OrderService orderService;
 
+    @Autowired
+    private EmailService emailService;
+
     /**
-     * Crea una sesión de checkout (PendingCheckout) y una preferencia de Mercado Pago.
-     * No se crea la orden ni se vacía el carrito hasta que el pago esté confirmado (webhook).
+     * Crea una sesión de checkout (PendingCheckout) y una preferencia de Mercado
+     * Pago.
+     * No se crea la orden ni se vacía el carrito hasta que el pago esté confirmado
+     * (webhook).
      */
     @Transactional
     public CheckoutResult createCheckout(Long userId) {
@@ -67,7 +72,8 @@ public class MercadoPagoService {
         pending.setUser(user);
         pending = pendingCheckoutRepository.save(pending);
 
-        // Construir items para Mercado Pago (unit_price debe ser entero; el precio ya viene en pesos colombianos)
+        // Construir items para Mercado Pago (unit_price debe ser entero; el precio ya
+        // viene en pesos colombianos)
         List<Map<String, Object>> mpItems = cart.getItems().stream().map(cartItem -> {
             Product p = cartItem.getProduct();
             double price = p.getPrice() != null ? p.getPrice() : 0;
@@ -118,8 +124,7 @@ public class MercadoPagoService {
                 MP_PREFERENCES_URL,
                 HttpMethod.POST,
                 request,
-                MercadoPagoPreferenceResponse.class
-        );
+                MercadoPagoPreferenceResponse.class);
 
         if (response.getStatusCode() != HttpStatus.CREATED && response.getStatusCode() != HttpStatus.OK) {
             throw new RuntimeException("Error al crear preferencia de Mercado Pago");
@@ -137,8 +142,7 @@ public class MercadoPagoService {
                 pending.getId(),
                 null,
                 mpResponse.getInitPoint(),
-                mpResponse.getId()
-        );
+                mpResponse.getId());
     }
 
     public Order getOrderDetails(Long orderId) {
@@ -147,22 +151,63 @@ public class MercadoPagoService {
     }
 
     /**
-     * Devuelve la orden cuando el pago ya fue confirmado para este checkout. Si aún no se procesó, status "processing".
+     * Devuelve la orden cuando el pago ya fue confirmado para este checkout.
+     * Si no tiene orden asociada, consulta proactivamente a Mercado Pago por si el
+     * webhook falló o se demoró.
      */
     public OrderByCheckoutResponse getOrderByCheckoutId(Long checkoutId) {
-        return pendingCheckoutRepository.findById(checkoutId)
-                .map(p -> {
-                    if (p.getOrderId() != null) {
-                        Order order = orderRepository.findById(p.getOrderId()).orElse(null);
-                        return new OrderByCheckoutResponse("completed", order);
-                    }
-                    return new OrderByCheckoutResponse("processing", null);
-                })
-                .orElse(new OrderByCheckoutResponse("processing", null));
+        PendingCheckout p = pendingCheckoutRepository.findById(checkoutId).orElse(null);
+        if (p == null) {
+            return new OrderByCheckoutResponse("processing", null);
+        }
+
+        // Si ya tiene orden, devolvemos success
+        if (p.getOrderId() != null) {
+            Order order = orderRepository.findById(p.getOrderId()).orElse(null);
+            return new OrderByCheckoutResponse("completed", order);
+        }
+
+        // Si no tiene orden, verificamos en MP (proactivamente)
+        checkPaymentStatus(checkoutId);
+
+        // Volvemos a consultar la base de datos a ver si se creó
+        p = pendingCheckoutRepository.findById(checkoutId).orElse(null);
+        if (p != null && p.getOrderId() != null) {
+            Order order = orderRepository.findById(p.getOrderId()).orElse(null);
+            return new OrderByCheckoutResponse("completed", order);
+        }
+
+        return new OrderByCheckoutResponse("processing", null);
+    }
+
+    private void checkPaymentStatus(Long checkoutId) {
+        try {
+            // Buscamos pagos aprobados con external_reference = checkoutId
+            String url = "https://api.mercadopago.com/v1/payments/search?external_reference=" + checkoutId
+                    + "&status=approved";
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + accessToken);
+            HttpEntity<Void> request = new HttpEntity<>(headers);
+
+            ResponseEntity<MercadoPagoSearchResponse> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    request,
+                    MercadoPagoSearchResponse.class);
+
+            if (response.getBody() != null && response.getBody().getResults() != null
+                    && !response.getBody().getResults().isEmpty()) {
+                // Existe al menos un pago aprobado con este external_reference
+                createOrderFromPayment(String.valueOf(checkoutId));
+            }
+        } catch (Exception e) {
+            System.err.println("Error verificando estado de pago en MP: " + e.getMessage());
+        }
     }
 
     /**
-     * Procesa notificación de Mercado Pago (IPN). Si el pago está aprobado, crea la orden desde el carrito y la marca como PAID.
+     * Procesa notificación de Mercado Pago (IPN). Si el pago está aprobado, crea la
+     * orden desde el carrito y la marca como PAID.
      */
     public void processNotification(String topic, String paymentId) {
         if (!"payment".equals(topic) || paymentId == null || paymentId.isEmpty()) {
@@ -176,8 +221,7 @@ public class MercadoPagoService {
                     MP_PAYMENTS_URL + "/" + paymentId,
                     HttpMethod.GET,
                     request,
-                    MercadoPagoPaymentResponse.class
-            );
+                    MercadoPagoPaymentResponse.class);
             if (response.getBody() != null && "approved".equals(response.getBody().getStatus())) {
                 String ref = response.getBody().getExternalReference();
                 if (ref != null && !ref.isEmpty()) {
@@ -190,7 +234,8 @@ public class MercadoPagoService {
     }
 
     /**
-     * Crea la orden desde el carrito del usuario y la marca como PAID. Solo se llama cuando el pago está aprobado.
+     * Crea la orden desde el carrito del usuario y la marca como PAID. Solo se
+     * llama cuando el pago está aprobado.
      */
     @Transactional
     public void createOrderFromPayment(String pendingCheckoutIdStr) {
@@ -203,6 +248,24 @@ public class MercadoPagoService {
         Order order = orderService.checkoutAndSetPaid(userId);
         pending.setOrderId(order.getId());
         pendingCheckoutRepository.save(pending);
+
+        // Notificar a los tenderos
+        notifyStoreOwners(order);
+    }
+
+    private void notifyStoreOwners(Order order) {
+        if (order.getItems() == null || order.getItems().isEmpty()) {
+            return;
+        }
+
+        // Agrupar items por dueño del producto (Store Owner)
+        Map<User, List<OrderItem>> itemsByStoreOwner = order.getItems().stream()
+                .collect(Collectors.groupingBy(item -> item.getProduct().getUser()));
+
+        // Enviar email a cada tendero
+        itemsByStoreOwner.forEach((storeOwner, items) -> {
+            emailService.sendOrderNotificationToStore(storeOwner, items, order);
+        });
     }
 
     @Data
@@ -225,5 +288,10 @@ public class MercadoPagoService {
         private String status;
         @JsonProperty("external_reference")
         private String externalReference;
+    }
+
+    @Data
+    private static class MercadoPagoSearchResponse {
+        private List<MercadoPagoPaymentResponse> results;
     }
 }
