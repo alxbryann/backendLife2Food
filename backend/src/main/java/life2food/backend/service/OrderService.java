@@ -90,4 +90,16 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return orderRepository.findByUser(user);
     }
+
+    @Transactional(readOnly = true)
+    public List<Order> getOrdersByStoreOwner(Long storeOwnerId) {
+        return orderRepository.findOrdersByStoreOwner(storeOwnerId);
+    }
+
+    public Order updateOrderStatus(Long orderId, String status) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        order.setStatus(status);
+        return orderRepository.save(order);
+    }
 }

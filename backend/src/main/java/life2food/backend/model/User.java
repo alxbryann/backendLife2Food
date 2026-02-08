@@ -36,6 +36,8 @@ public class User {
 
     private boolean isBusiness;
 
+    private String fcmToken;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Cart> carts = new ArrayList<>();

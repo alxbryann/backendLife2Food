@@ -25,6 +25,9 @@ public class NotificationTestController {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private life2food.backend.service.NotificationService notificationService;
+
     @GetMapping("/notify/{orderId}")
     public String testNotification(@PathVariable Long orderId) {
         Order order = orderRepository.findById(orderId).orElse(null);
@@ -43,6 +46,7 @@ public class NotificationTestController {
         StringBuilder result = new StringBuilder();
         itemsByStoreOwner.forEach((storeOwner, items) -> {
             emailService.sendOrderNotificationToStore(storeOwner, items, order);
+            notificationService.notifyStoreOwner(storeOwner, items, order);
             result.append("Sent notification to: ").append(storeOwner.getEmail()).append("\n");
         });
 

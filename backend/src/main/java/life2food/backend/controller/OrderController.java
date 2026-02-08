@@ -22,7 +22,32 @@ public class OrderController {
             return ResponseEntity.ok(order);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(null);
-            // In a production app, we'd return a proper error DTO
+        }
+    }
+
+    /** Órdenes que contienen productos del vendedor (ruta más específica antes que /{userId}) */
+    @GetMapping("/store/{storeOwnerId}")
+    public ResponseEntity<List<Order>> getOrdersByStoreOwner(@PathVariable Long storeOwnerId) {
+        try {
+            List<Order> orders = orderService.getOrdersByStoreOwner(storeOwnerId);
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    @PatchMapping("/{orderId}/status")
+    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, @RequestBody java.util.Map<String, String> body) {
+        try {
+            String status = body != null && body.containsKey("status") ? body.get("status") : null;
+            if (status == null || status.isBlank()) {
+                return ResponseEntity.badRequest().build();
+            }
+            Order order = orderService.updateOrderStatus(orderId, status);
+            return ResponseEntity.ok(order);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 

@@ -50,6 +50,9 @@ public class MercadoPagoService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     /**
      * Crea una sesión de checkout (PendingCheckout) y una preferencia de Mercado
      * Pago.
@@ -265,6 +268,7 @@ public class MercadoPagoService {
         // Enviar email a cada tendero
         itemsByStoreOwner.forEach((storeOwner, items) -> {
             emailService.sendOrderNotificationToStore(storeOwner, items, order);
+            notificationService.notifyStoreOwner(storeOwner, items, order);
         });
     }
 

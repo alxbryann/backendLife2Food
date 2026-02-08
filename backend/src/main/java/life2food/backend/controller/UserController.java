@@ -99,6 +99,9 @@ public class UserController {
         if (user.getPhoto_url() != null) {
             existingUser.setPhoto_url(user.getPhoto_url());
         }
+        if (user.getFcmToken() != null) {
+            existingUser.setFcmToken(user.getFcmToken());
+        }
         existingUser.setBusiness(user.isBusiness());
         return ResponseEntity.ok(userRepository.save(existingUser));
     }
