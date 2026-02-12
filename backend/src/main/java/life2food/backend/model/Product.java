@@ -24,6 +24,10 @@ public class Product {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = true)
+    private Category category;
+
     private String name;
 
     private String description;

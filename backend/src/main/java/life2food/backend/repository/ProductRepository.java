@@ -8,4 +8,6 @@ import life2food.backend.model.Product;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByUserId(Long userId);
+    List<Product> findByCategoryId(Long categoryId);
+    long countByCategoryId(Long categoryId);
 }

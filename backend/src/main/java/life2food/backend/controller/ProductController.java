@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import life2food.backend.model.Product;
 import life2food.backend.repository.ProductRepository;
+import life2food.backend.repository.CategoryRepository;
 import life2food.backend.service.S3Service;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,6 +31,9 @@ public class ProductController {
     public ProductRepository productRepository;
 
     @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
     private S3Service s3Service;
 
     @GetMapping()
@@ -42,6 +46,11 @@ public class ProductController {
         return productRepository.findByUserId(userId);
     }
 
+    @GetMapping("/category/{categoryId}")
+    public List<Product> getProductsByCategoryId(@PathVariable Long categoryId) {
+        return productRepository.findByCategoryId(categoryId);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
         return productRepository.findById(id)
@@ -50,11 +59,21 @@ public class ProductController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Product createProduct(@RequestPart("product") Product product, @RequestPart("image") MultipartFile image)
+    public ResponseEntity<?> createProduct(@RequestPart("product") Product product, @RequestPart("image") MultipartFile image)
             throws IOException {
+        // Validar que el producto tenga categoría
+        if (product.getCategory() == null || product.getCategory().getId() == null) {
+            return ResponseEntity.badRequest().body("La categoría es obligatoria");
+        }
+        
+        // Validar que la categoría exista
+        if (!categoryRepository.existsById(product.getCategory().getId())) {
+            return ResponseEntity.badRequest().body("La categoría especificada no existe");
+        }
+        
         String imageUrl = s3Service.uploadFile(image);
         product.setImageUrl(imageUrl);
-        return productRepository.save(product);
+        return ResponseEntity.ok(productRepository.save(product));
     }
 
     @PatchMapping("/{id}")
@@ -80,6 +99,9 @@ public class ProductController {
         }
         if (product.getUser() != null) {
             existingProduct.setUser(product.getUser());
+        }
+        if (product.getCategory() != null) {
+            existingProduct.setCategory(product.getCategory());
         }
         return ResponseEntity.ok(productRepository.save(existingProduct));
     }
